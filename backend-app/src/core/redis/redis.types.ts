@@ -6,3 +6,8 @@ export type RedisModuleAsyncOptions = {
 export type RedisModuleConfiguration = {
 	url: string;
 };
+
+export type RedisValue = {
+	key: string;
+	value: string;
+};

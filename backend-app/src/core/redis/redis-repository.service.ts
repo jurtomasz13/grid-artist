@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { RedisModuleConfiguration } from './redis.types';
+import { RedisModuleConfiguration, RedisValue } from './redis.types';
 import { Redis } from 'ioredis';
 
 @Injectable()
@@ -16,6 +16,14 @@ export class RedisRepositoryService {
 
 	async setValue(key: string, value: string): Promise<void> {
 		await this.redisClient.set(key, value);
+	}
+
+	async batchSetValue(data: RedisValue[]): Promise<void> {
+		const pipeline = this.redisClient.pipeline();
+		data.forEach(({ key, value }) => {
+			pipeline.set(key, value);
+		});
+		await pipeline.exec();
 	}
 
 	async getValue(key: string): Promise<string | null> {
