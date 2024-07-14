@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Cell } from './cell.entity';
 
-export class CellRepository extends Repository<Cell> {
+export class CellRepositoryService extends Repository<Cell> {
 	async updateColor(position: number, color: string): Promise<void> {
 		await this.createQueryBuilder()
 			.update(Cell)

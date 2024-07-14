@@ -3,4 +3,7 @@ export interface AppConfig {
 	NODE_ENV: string;
 	DATABASE_URL: string;
 	REDIS_URL: string;
+	GRID: {
+		MAX_CELL_CHANGES: number;
+	};
 }

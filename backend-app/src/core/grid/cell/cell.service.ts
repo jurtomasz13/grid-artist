@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CellRepository } from './cell-repository.service';
+import { CellRepositoryService } from './cell-repository.service';
 import { Cell } from './cell.entity';
 
 @Injectable()
 export class CellService {
 	constructor(
-		@InjectRepository(CellRepository)
-		private readonly cellRepository: CellRepository,
+		@InjectRepository(CellRepositoryService)
+		private readonly cellRepository: CellRepositoryService,
 	) {}
 
 	async setColor(position: number, color: string): Promise<void> {
