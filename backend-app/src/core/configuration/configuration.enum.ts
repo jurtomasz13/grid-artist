@@ -6,5 +6,6 @@ export enum AppConfigRootEnum {
 }
 
 export enum AppConfigGridEnum {
+	SIZE = 'GRID.SIZE',
 	MAX_CELL_CHANGES = 'GRID.MAX_CELL_CHANGES',
 }

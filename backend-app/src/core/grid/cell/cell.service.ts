@@ -1,17 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CellRepositoryService } from './cell-repository.service';
-import { Cell } from './cell.entity';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ICellRepositoryService } from './interfaces/cell-repository-service.interface';
 
 @Injectable()
 export class CellService {
 	constructor(
-		@InjectRepository(CellRepositoryService)
-		private readonly cellRepository: CellRepositoryService,
+		@Inject('CellRedisRepositoryService')
+		private readonly cellRepositoryService: ICellRepositoryService,
 	) {}
 
 	async setColor(position: number, color: string): Promise<void> {
-		const cell = await this.cellRepository.findOne({ where: { position } });
+		const cell = await this.cellRepositoryService.findOneCell(position);
 
 		if (!cell) {
 			throw new BadRequestException(
@@ -19,10 +17,8 @@ export class CellService {
 			);
 		}
 
-		cell.color = color;
-
 		try {
-			await this.cellRepository.save(cell);
+			await this.cellRepositoryService.updateColor(position, color);
 		} catch (error) {
 			if (error instanceof Array && error[0].property === 'color') {
 				throw new BadRequestException('Invalid hex color.');
@@ -31,7 +27,7 @@ export class CellService {
 		}
 	}
 
-	async getCells(): Promise<Cell[]> {
-		return this.cellRepository.find();
-	}
+	// async getCells(): Promise<Cell[]> {
+	// 	return this.cellRepositoryService.find();
+	// }
 }

@@ -7,6 +7,7 @@ export default (): AppConfig => {
 
 	return {
 		GRID: {
+			SIZE: 129600, // 360 * 360
 			MAX_CELL_CHANGES: 100,
 		},
 		PORT: PORT || 3000,

@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GridService } from './grid.service';
-import { CellRepositoryService } from './cell/cell-repository.service';
+import { ICellRepositoryService } from './cell/interfaces/cell-repository-service.interface';
 
 @Injectable()
 export class GridSyncService {
 	constructor(
-		private readonly cellRepositoryService: CellRepositoryService,
-		private readonly gridService: GridService,
+		@Inject('CellRedisRepositoryService')
+		private readonly cellRedisRepositoryService: ICellRepositoryService,
+		@Inject('CellTypeORMRepositoryService')
+		private readonly cellTypeORMRepositoryService: ICellRepositoryService,
 	) {}
 
 	@Cron(CronExpression.EVERY_10_MINUTES)

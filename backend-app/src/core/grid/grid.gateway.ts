@@ -1,4 +1,4 @@
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import {
 	MessageBody,
 	SubscribeMessage,
@@ -12,6 +12,7 @@ import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { BadRequestTransformationFilter } from '../filters/BadRequestTransformationFilter';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigGridEnum } from '../configuration/configuration.enum';
+import { GridService } from './grid.service';
 
 @WebSocketGateway()
 @UseFilters(new BadRequestTransformationFilter())
@@ -25,17 +26,30 @@ export class GridGateway {
 	>();
 	private readonly MAX_CELL_CHANGES: number;
 
-	constructor(private readonly configService: ConfigService) {
+	constructor(
+		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly configService: ConfigService,
+		private readonly gridService: GridService,
+	) {
 		this.MAX_CELL_CHANGES = this.configService.get<number>(
 			AppConfigGridEnum.MAX_CELL_CHANGES,
 		);
+	}
+
+	@Cron(CronExpression.EVERY_SECOND, { name: 'initialize-grid' })
+	async initializeGrid() {
+		await this.gridService.initializeEmptyGrid();
+		this.schedulerRegistry.deleteCronJob('initialize-grid');
 	}
 
 	@Cron('*/2 * * * * *')
 	sendGridChanges() {
 		if (this.cellChanges.size <= 0) return;
 
-		this.server.emit('gridChanges', Array.from(this.cellChanges.values()));
+		const cellChangesArr = Array.from(this.cellChanges.values());
+		// await this.updateGrid(cellChangesArr);
+
+		this.server.emit('gridChanges', cellChangesArr);
 		this.cellChanges.clear();
 	}
 

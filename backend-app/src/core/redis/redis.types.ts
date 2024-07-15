@@ -7,7 +7,7 @@ export type RedisModuleConfiguration = {
 	url: string;
 };
 
-export type RedisValue = {
+export type RedisValue<T> = {
 	key: string;
-	value: string;
+	value: T;
 };
