@@ -1,0 +1,26 @@
+{
+  "name": "grid-artist",
+  "version": "1.0.0",
+  "description": "An app that lets users collaborate with each other to make creative grid art.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jurtomasz13/grid-artist.git"
+  },
+  "keywords": [
+    "grid",
+    "grid-artist",
+    "artist",
+    "creativity",
+    "art"
+  ],
+  "author": "Tomasz Jurek",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jurtomasz13/grid-artist/issues"
+  },
+  "homepage": "https://github.com/jurtomasz13/grid-artist#readme"
+}

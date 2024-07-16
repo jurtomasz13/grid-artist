@@ -40,4 +40,8 @@ export class CellTypeORMRepositoryService
 	async findAll(): Promise<Cell[]> {
 		return this.find();
 	}
+
+	async clearDb(): Promise<void> {
+		console.log('fake clear');
+	}
 }

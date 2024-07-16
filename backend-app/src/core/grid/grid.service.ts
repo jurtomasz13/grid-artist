@@ -17,24 +17,42 @@ export class GridService {
 		return this.cellsRepositoryService.findAll();
 	}
 
-	async updateGrid(cells: Cell[]): Promise<void> {}
+	async updateGrid(cells: Cell[]): Promise<void> {
+		await this.cellsRepositoryService.updateColors(cells);
+	}
 
 	async initializeEmptyGrid(): Promise<void> {
-		const batchSize = 50;
 		const gridSize = this.configService.get<number>(AppConfigGridEnum.SIZE);
+		const batchSize = 50;
 
-		let cells = [];
-		for (let i = 0; i < batchSize; i++) {
-			cells.push({
-				position: i,
-				color: '#ffffff',
-			});
+		const hasLastElement = this.cellsRepositoryService.findOneCell(
+			gridSize - 1,
+		);
+
+		const hasMoreElements = this.cellsRepositoryService.findOneCell(gridSize);
+
+		if (hasMoreElements) {
+			console.log('Grid size has changed! Clearing grid...');
 		}
 
-		for (let i = 0; i < gridSize / batchSize; i++) {
+		if (!hasMoreElements && hasLastElement) {
+			console.log('Grid has already been initialized!');
+			return;
+		}
+
+		await this.cellsRepositoryService.clearDb();
+
+		console.log('Initializing empty grid...');
+		for (let i = 0; i < Math.ceil(gridSize / batchSize); i++) {
+			let cells = [];
 			for (let j = 0; j < batchSize; j++) {
-				cells[i].position += batchSize * j;
-				console.log(cells[j].position);
+				const position = i * batchSize + j;
+				if (position >= gridSize) break; // Avoid adding extra cells beyond the gridSize
+
+				cells.push({
+					position: position,
+					color: '#ffffff',
+				});
 			}
 
 			await this.cellsRepositoryService.createMany(cells);

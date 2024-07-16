@@ -46,4 +46,8 @@ export class CellRedisRepositoryService implements ICellRepositoryService {
 
 		await this.redisRepositoryService.batchSetValue<string>(parsedCells);
 	}
+
+	async clearDb(): Promise<void> {
+		await this.redisRepositoryService.clearDb();
+	}
 }

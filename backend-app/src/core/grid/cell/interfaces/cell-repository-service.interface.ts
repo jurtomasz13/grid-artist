@@ -6,4 +6,5 @@ export interface ICellRepositoryService {
 	findOneCell(position: number): Promise<Cell>;
 	updateColor(position: number, color: string): Promise<void>;
 	updateColors(cells: Cell[]): Promise<void>;
+	clearDb(): Promise<void>;
 }

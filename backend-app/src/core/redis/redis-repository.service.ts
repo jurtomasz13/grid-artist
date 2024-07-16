@@ -54,4 +54,8 @@ export class RedisRepositoryService {
 	async closeConnection(): Promise<void> {
 		await this.redisClient.quit();
 	}
+
+	async clearDb(): Promise<void> {
+		await this.redisClient.flushdb();
+	}
 }
