@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
 import { HexColorPicker } from "react-colorful";
+import { useGrid } from "../hooks/useGrid";
 
 type Box = {
 	id: number;
@@ -11,17 +12,23 @@ type Box = {
 	color: string;
 };
 
-export const Grid = () => {
-	const boxSize = 20;
-  const numBoxes = 50;
+export type GridProps = {
+	boxSize?: number;
+	numBoxes?: number;
+}
 
-	const clickTimeoutRef = useRef(0);
+export const Grid: FC<GridProps> = ({
+	boxSize = 20,
+	numBoxes = 45,
+}) => {
+	const gridCtx = useGrid();
+	const clickTimeoutRef = useRef<NodeJS.Timeout>();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [_placeholder, setPlaceholder] = useState({});
+	const [_, refresh] = useState({});
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [boxes, _setBoxes] = useState<Map<number, Box>>(
-    new Map(Array.from({ length: numBoxes * numBoxes }, (_, i) => (
+	const [boxes, _setBoxes] = useState<Map<number, Box>>(
+		new Map(Array.from({ length: numBoxes * numBoxes }, (_, i) => (
 			[
 				i,
 				{
@@ -30,11 +37,31 @@ export const Grid = () => {
 					y: Math.floor(i / numBoxes) * boxSize,
 					width: boxSize,
 					height: boxSize,
-					color: '#000000',
+					color: '#ffffff',
 				}
 			]
 		)))
-  );
+	);
+	
+	useEffect(() => {
+		if (gridCtx.initialGrid.length > 0) {
+			gridCtx.initialGrid.forEach((cell, position) => {
+				const box = boxes.get(position);
+
+				if (!box) {
+					console.log('Box not found');
+					return;
+				}
+
+				boxes.set(position, {
+					...box,
+					color: cell.color,
+				});
+			});
+
+			refresh({});
+		}
+	}, [gridCtx.initialGrid, boxes]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentColor, setCurrentColor] = useState('#000000');
@@ -44,7 +71,8 @@ export const Grid = () => {
 
 		const timeout = setTimeout(() => {
 			changeBoxColor(id);
-		});
+			gridCtx.updateCell(id, currentColor);
+		}, 200);
 
 		clickTimeoutRef.current = timeout;
   };
@@ -62,7 +90,7 @@ export const Grid = () => {
 			color: color ? color : currentColor 
 		});
 
-		setPlaceholder({});
+		refresh({});
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

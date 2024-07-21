@@ -1,4 +1,4 @@
-import { RedisRepositoryService } from '@/core/redis/redis-repository.service';
+import { RedisService } from '@/core/redis/redis.service';
 import { ICellRepositoryService } from '../interfaces/cell-repository-service.interface';
 import { Cell } from '../cell.types';
 import { Injectable } from '@nestjs/common';
@@ -7,12 +7,10 @@ export const CellRedisRepositoryServiceToken = 'CellRedisRepositoryService';
 
 @Injectable()
 export class CellRedisRepositoryService implements ICellRepositoryService {
-	constructor(
-		private readonly redisRepositoryService: RedisRepositoryService,
-	) {}
+	constructor(private readonly redisService: RedisService) {}
 
 	async updateColor(position: number, color: string): Promise<void> {
-		await this.redisRepositoryService.setValue(`cells:${position}`, color);
+		await this.redisService.setValue(`cells:${position}`, color);
 	}
 
 	async updateColors(cells: Cell[]): Promise<void> {
@@ -21,19 +19,17 @@ export class CellRedisRepositoryService implements ICellRepositoryService {
 			value: color,
 		}));
 
-		await this.redisRepositoryService.batchSetValue<string>(parsedCells);
+		await this.redisService.batchSetValue<string>(parsedCells);
 	}
 
 	async findAll() {
-		const rawCells = await this.redisRepositoryService.getAllValues('cells:*');
+		const rawCells = await this.redisService.getAllValues('cells:*');
 		const cells = rawCells.map((cell) => JSON.parse(cell)) as Cell[];
 		return cells;
 	}
 
 	async findOneCell(position: number) {
-		const rawCell = await this.redisRepositoryService.getValue(
-			`cells:${position}`,
-		);
+		const rawCell = await this.redisService.getValue(`cells:${position}`);
 		const cell = JSON.parse(rawCell) as Cell;
 		return cell;
 	}
@@ -44,10 +40,10 @@ export class CellRedisRepositoryService implements ICellRepositoryService {
 			value: color,
 		}));
 
-		await this.redisRepositoryService.batchSetValue<string>(parsedCells);
+		await this.redisService.batchSetValue<string>(parsedCells);
 	}
 
 	async clearDb(): Promise<void> {
-		await this.redisRepositoryService.clearDb();
+		await this.redisService.clearDb();
 	}
 }

@@ -3,7 +3,7 @@ import { RedisModuleConfiguration, RedisValue } from './redis.types';
 import { Redis } from 'ioredis';
 
 @Injectable()
-export class RedisRepositoryService {
+export class RedisService {
 	private readonly redisClient: Redis;
 
 	constructor(
@@ -27,6 +27,7 @@ export class RedisRepositoryService {
 	}
 
 	async getValue(key: string): Promise<string | null> {
+		console.log('Trying to fetch by key: ', key);
 		return await this.redisClient.get(key);
 	}
 

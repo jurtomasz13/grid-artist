@@ -13,7 +13,7 @@ export class GridService {
 		private readonly cellsRepositoryService: ICellRepositoryService,
 	) {}
 
-	async getCells(): Promise<Cell[]> {
+	async getGrid(): Promise<Cell[]> {
 		return this.cellsRepositoryService.findAll();
 	}
 

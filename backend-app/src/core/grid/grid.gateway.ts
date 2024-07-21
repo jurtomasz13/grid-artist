@@ -3,11 +3,12 @@ import {
 	MessageBody,
 	OnGatewayConnection,
 	OnGatewayDisconnect,
+	OnGatewayInit,
 	SubscribeMessage,
 	WebSocketGateway,
 	WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Cell } from './cell/cell.types';
 import { CreateCellDto } from './cell/cell.dto';
 import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
@@ -16,10 +17,16 @@ import { ConfigService } from '@nestjs/config';
 import { AppConfigGridEnum } from '../configuration/configuration.enum';
 import { GridService } from './grid.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+	cors: {
+		origin: '*',
+	},
+})
 @UseFilters(new BadRequestTransformationFilter())
 @UsePipes(new ValidationPipe({ transform: true }))
-export class GridGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GridGateway
+	implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
 	@WebSocketServer()
 	private readonly MAX_CELL_CHANGES: number;
 	private server: Server;
@@ -39,10 +46,14 @@ export class GridGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		);
 	}
 
-	handleConnection(_client: any, ..._args: any[]) {
+	afterInit(server: Server) {
+		this.server = server;
+	}
+
+	async handleConnection(client: Socket, ..._args: any[]) {
 		this.connectedClients++;
-		//TODO Send initial grid
-		_client.emit('initial-grid', 'Welcome in Grid Artist!');
+		const initialGrid = await this.gridService.getGrid();
+		client.emit('initial-grid', initialGrid);
 	}
 
 	handleDisconnect(_client: any) {
@@ -62,6 +73,7 @@ export class GridGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@Cron(CronExpression.EVERY_MINUTE)
 	async sendGridChanges() {
+		console.log('Updating grid changes...');
 		if (this.cellChanges.size <= 0) return;
 
 		const cellChangesArr = Array.from(this.cellChanges.values());
@@ -71,8 +83,9 @@ export class GridGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		this.cellChanges.clear();
 	}
 
-	@SubscribeMessage('change-cell')
+	@SubscribeMessage('update-cell')
 	changeCell(@MessageBody() cell: CreateCellDto) {
+		console.log('Update cell', cell);
 		this.cellChanges.set(cell.position, cell);
 
 		if (this.cellChanges.size > this.MAX_CELL_CHANGES) {

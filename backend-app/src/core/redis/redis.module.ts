@@ -1,6 +1,6 @@
 import { Module, Global, DynamicModule } from '@nestjs/common';
 import { Provider } from '@nestjs/common/interfaces';
-import { RedisRepositoryService } from './redis-repository.service';
+import { RedisService } from './redis.service';
 import { RedisModuleAsyncOptions } from './redis.types';
 
 @Global()
@@ -9,8 +9,8 @@ export class RedisModule {
 	static forRootAsync(options: RedisModuleAsyncOptions): DynamicModule {
 		return {
 			module: RedisModule,
-			providers: [this.createConfigOptions(options), RedisRepositoryService],
-			exports: [RedisRepositoryService],
+			providers: [this.createConfigOptions(options), RedisService],
+			exports: [RedisService],
 		};
 	}
 
