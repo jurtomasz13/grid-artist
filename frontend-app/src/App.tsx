@@ -1,4 +1,4 @@
-import { Grid } from "./components/Grid";
+import { Grid } from "./components/GridArtist/Grid";
 import { GridProvider } from "./context/GridContext";
 
 export const App = () => {

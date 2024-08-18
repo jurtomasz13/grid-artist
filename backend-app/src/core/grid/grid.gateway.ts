@@ -9,6 +9,7 @@ import {
 	WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { CronJob } from 'cron';
 import { Cell } from './cell/cell.types';
 import { CreateCellDto } from './cell/cell.dto';
 import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
@@ -35,6 +36,7 @@ export class GridGateway
 		Cell
 	>();
 	private connectedClients = 0;
+	private currentInterval = 60000;
 
 	constructor(
 		private readonly schedulerRegistry: SchedulerRegistry,
@@ -48,16 +50,19 @@ export class GridGateway
 
 	afterInit(server: Server) {
 		this.server = server;
+		this.scheduleSendGridChanges();
 	}
 
 	async handleConnection(client: Socket, ..._args: any[]) {
 		this.connectedClients++;
 		const initialGrid = await this.gridService.getGrid();
 		client.emit('initial-grid', initialGrid);
+		this.adjustSendGridChangesInterval();
 	}
 
 	handleDisconnect(_client: any) {
 		this.connectedClients--;
+		this.adjustSendGridChangesInterval();
 	}
 
 	@Cron(CronExpression.EVERY_5_SECONDS)
@@ -65,13 +70,6 @@ export class GridGateway
 		console.log(`Currently connected clients: ${this.connectedClients}`);
 	}
 
-	@Cron(CronExpression.EVERY_SECOND, { name: 'initialize-grid' })
-	async initializeGrid() {
-		this.schedulerRegistry.deleteCronJob('initialize-grid');
-		await this.gridService.initializeEmptyGrid();
-	}
-
-	@Cron(CronExpression.EVERY_MINUTE)
 	async sendGridChanges() {
 		console.log('Updating grid changes...');
 		if (this.cellChanges.size <= 0) return;
@@ -85,11 +83,49 @@ export class GridGateway
 
 	@SubscribeMessage('update-cell')
 	changeCell(@MessageBody() cell: CreateCellDto) {
-		console.log('Update cell', cell);
+		console.log('Update cell event detected, updating cell', cell);
 		this.cellChanges.set(cell.position, cell);
 
 		if (this.cellChanges.size > this.MAX_CELL_CHANGES) {
 			this.sendGridChanges();
+		}
+	}
+
+	@Cron(CronExpression.EVERY_SECOND, { name: 'initialize-grid' })
+	async initializeGrid() {
+		this.schedulerRegistry.deleteCronJob('initialize-grid');
+		await this.gridService.initializeEmptyGrid();
+	}
+
+	private scheduleSendGridChanges() {
+		const job = new CronJob(`*/${this.currentInterval / 1000} * * * * *`, () =>
+			this.sendGridChanges(),
+		);
+		this.schedulerRegistry.addCronJob('sendGridChanges', job);
+		job.start();
+	}
+
+	private adjustSendGridChangesInterval() {
+		const newInterval = this.calculateInterval();
+
+		if (newInterval !== this.currentInterval) {
+			this.currentInterval = newInterval;
+			this.schedulerRegistry.deleteCronJob('sendGridChanges');
+			this.scheduleSendGridChanges();
+		}
+	}
+
+	private calculateInterval(): number {
+		if (this.connectedClients === 0) {
+			return 60000;
+		}
+
+		if (this.connectedClients < 10) {
+			return 1000;
+		} else if (this.connectedClients < 50) {
+			return 2000;
+		} else {
+			return 3000;
 		}
 	}
 }

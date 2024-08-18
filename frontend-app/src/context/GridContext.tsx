@@ -1,8 +1,6 @@
 import { createContext, FC, ReactNode, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 export type Cell = {
 	position: number;
 	color: string;
@@ -11,6 +9,7 @@ export type Cell = {
 export type GridContextType = {
 	updateCell: (position: number, color: string) => void;
 	initialGrid: Cell[];
+	gridChanges: Cell[];
 };
 
 export const GridContext = createContext<GridContextType>({} as GridContextType);
@@ -23,10 +22,11 @@ export const GridProvider: FC<GridProviderProps> = ({ children }) => {
 	const [socket, setSocket] = useState<Socket
 	| null>(null);
 	const [initialGrid, setInitialGrid] = useState<Cell[]>([]);
+	const [gridChanges, setGridChanges] = useState<Cell[]>([]);
 
 	const updateCell = (position: number, color: string) => {
 		const cell = {
-			position,
+			position: position,
 			color,
 		};
 		
@@ -46,6 +46,10 @@ export const GridProvider: FC<GridProviderProps> = ({ children }) => {
 			console.log(initialGrid);
 			setInitialGrid(initialGrid);
 		});
+
+		socket.on('grid-changes', (cells: Cell[]) => {
+			setGridChanges(cells);
+		});
 		
 		socket.on('disconnect', () => {
 			console.log('Disconnected from grid artist server');
@@ -62,6 +66,7 @@ export const GridProvider: FC<GridProviderProps> = ({ children }) => {
 		<GridContext.Provider value={{
 			updateCell,
 			initialGrid,
+			gridChanges,
 		}}>
 			{children}
 		</GridContext.Provider>
